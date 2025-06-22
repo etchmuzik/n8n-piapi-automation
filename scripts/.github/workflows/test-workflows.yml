@@ -1,0 +1,42 @@
+name: Test n8n Workflows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install n8n
+      run: npm install -g n8n
+      
+    - name: Install dependencies
+      run: npm install axios
+      
+    - name: Start n8n
+      run: |
+        n8n start &
+        sleep 10
+      env:
+        N8N_BASIC_AUTH_ACTIVE: false
+        N8N_PORT: 5678
+        
+    - name: Import workflows
+      run: |
+        for workflow in workflows/*.json; do
+          n8n import:workflow --input="$workflow"
+        done
+        
+    - name: Run tests
+      run: node tests/webhook-tests.js

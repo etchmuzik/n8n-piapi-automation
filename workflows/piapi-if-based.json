@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "instanceId": "2b4ab318d4f8eba10155f5eb0f51c5f5d883c3a9b9a506cad7c0e0c2f2c8874e"
+  },
+  "name": "PiAPI IF Based",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "piapi-test",
+        "responseMode": "lastNode"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [820, 380],
+      "webhookId": "d6e93962-0d7c-46e5-a729-8bad5675529b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equal",
+              "value2": "image"
+            }
+          ]
+        }
+      },
+      "id": "b2c3d4e5-f6g7-8901-bcde-f12345678901",
+      "name": "IF Image",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equal",
+              "value2": "music"
+            }
+          ]
+        }
+      },
+      "id": "c3d4e5f6-g7h8-9012-cdef-123456789012",
+      "name": "IF Music",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1040, 460]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"Qubico/flux1-schnell\", \"task_type\": \"txt2img\", \"input\": {\"prompt\": \"{{ $json.prompt || 'image' }}\"}}"
+      },
+      "id": "d4e5f6g7-h8i9-0123-def1-234567890123",
+      "name": "Image Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1260, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"Suno/v3.5\", \"task_type\": \"music_generation\", \"input\": {\"prompt\": \"{{ $json.prompt || 'music' }}\"}}"
+      },
+      "id": "e5f6g7h8-i9j0-1234-ef12-345678901234",
+      "name": "Music Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1260, 500]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "result",
+              "value": "success"
+            },
+            {
+              "name": "task_id",
+              "value": "={{ $json.data.task_id }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $('Webhook').item.json.command }}"
+            }
+          ]
+        }
+      },
+      "id": "f6g7h8i9-j0k1-2345-f123-456789012345",
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [1480, 380]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF Music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Image": {
+      "main": [
+        [
+          {
+            "node": "Image Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Music": {
+      "main": [
+        [
+          {
+            "node": "Music Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Task": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Music Task": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "id": "",
+  "tags": []
+}

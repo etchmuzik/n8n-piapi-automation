@@ -1,0 +1,20 @@
+# Logs
+logs/*.log
+*.log
+
+# Credentials (keep template only)
+configs/credentials.json
+
+# n8n database and cache
+.n8n/
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.production
