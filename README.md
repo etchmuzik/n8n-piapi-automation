@@ -1,4 +1,5 @@
-# 🚀 MCP-Powered n8n Automation
+# 🚀 n8n-piapi-automation
+MCP-powered n8n workflow automation for PiAPI integration with image, music, and video generation
 
 ## Quick Start
 
@@ -29,9 +30,17 @@ cd scripts && ./setup.sh
 - `test-workflows.sh` - Test all endpoints
 - `backup.sh` - Create full backup
 
+## Features
+
+✅ **Working PiAPI Integration** - Image, music, and video generation  
+✅ **MCP-Powered Automation** - CLI-based workflow management  
+✅ **GitHub Integration** - Version control and CI/CD  
+✅ **Automated Testing** - Webhook endpoint validation  
+✅ **Easy Deployment** - One-command setup and import  
+
 ## Next Steps
 
 1. Update `configs/credentials-template.json` with real API keys
 2. Add new workflows to `workflows/` directory
 3. Run tests regularly with `test-workflows.sh`
-4. Set up GitHub integration for version control
+4. Use GitHub Actions for automated testing
