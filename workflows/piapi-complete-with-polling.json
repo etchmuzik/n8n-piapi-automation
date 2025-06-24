@@ -1,0 +1,405 @@
+{
+  "meta": {
+    "instanceId": "2b4ab318d4f8eba10155f5eb0f51c5f5d883c3a9b9a506cad7c0e0c2f2c8874e"
+  },
+  "name": "PiAPI Complete with Polling",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "piapi-generate",
+        "responseMode": "lastNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 400],
+      "webhookId": "piapi-generate-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equal",
+              "value2": "image"
+            }
+          ]
+        }
+      },
+      "id": "if-image",
+      "name": "IF Image",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equal",
+              "value2": "music"
+            }
+          ]
+        }
+      },
+      "id": "if-music",
+      "name": "IF Music",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [470, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equal",
+              "value2": "video"
+            }
+          ]
+        }
+      },
+      "id": "if-video",
+      "name": "IF Video",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [470, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"{{ $json.model || 'Qubico/flux1-schnell' }}\", \"task_type\": \"txt2img\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"width\": {{ $json.width || 1024 }}, \"height\": {{ $json.height || 1024 }}}}"
+      },
+      "id": "create-image-task",
+      "name": "Create Image Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"{{ $json.model || 'Suno/v3.5' }}\", \"task_type\": \"music_generation\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"make_instrumental\": {{ $json.instrumental || false }}}}"
+      },
+      "id": "create-music-task",
+      "name": "Create Music Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"{{ $json.model || 'Luma/dream-machine-v1' }}\", \"task_type\": \"txt2video\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"aspect_ratio\": \"{{ $json.aspect_ratio || '16:9' }}\"}}"
+      },
+      "id": "create-video-task",
+      "name": "Create Video Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 500]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Extract task ID and prepare for polling\nconst response = $input.item.json;\nconst taskId = response.data?.task_id;\n\nif (!taskId) {\n  throw new Error('No task_id received from PiAPI');\n}\n\n// Initialize polling data\nreturn {\n  json: {\n    task_id: taskId,\n    status: response.data.status || 'pending',\n    attempt: 1,\n    max_attempts: 30,\n    poll_interval: 5000,\n    created_at: new Date().toISOString(),\n    original_request: $('Webhook Trigger').item.json\n  }\n};"
+      },
+      "id": "prepare-polling",
+      "name": "Prepare Polling",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 400]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Polling loop controller\nconst data = $input.item.json;\n\n// Check if we should continue polling\nif (data.status === 'completed' || data.status === 'failed') {\n  return {\n    json: {\n      ...data,\n      should_continue: false,\n      polling_complete: true\n    }\n  };\n}\n\n// Check if max attempts reached\nif (data.attempt >= data.max_attempts) {\n  return {\n    json: {\n      ...data,\n      status: 'timeout',\n      error: 'Maximum polling attempts reached',\n      should_continue: false,\n      polling_complete: true\n    }\n  };\n}\n\n// Continue polling\nreturn {\n  json: {\n    ...data,\n    should_continue: true,\n    polling_complete: false\n  }\n};"
+      },
+      "id": "polling-controller",
+      "name": "Polling Controller",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1130, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.should_continue }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-continue-polling",
+      "name": "IF Continue Polling",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1350, 400]
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.poll_interval }}",
+        "unit": "ms"
+      },
+      "id": "wait-before-poll",
+      "name": "Wait Before Poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1570, 320]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.piapi.ai/api/v1/task/{{ $json.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        }
+      },
+      "id": "check-task-status",
+      "name": "Check Task Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1790, 320]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Update polling data with new status\nconst pollData = $('Polling Controller').item.json;\nconst statusResponse = $input.item.json;\n\nreturn {\n  json: {\n    ...pollData,\n    status: statusResponse.data?.status || pollData.status,\n    attempt: pollData.attempt + 1,\n    last_check: new Date().toISOString(),\n    result: statusResponse.data?.output || null,\n    error: statusResponse.data?.error || null\n  }\n};"
+      },
+      "id": "update-status",
+      "name": "Update Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2010, 320]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Format final result\nconst data = $input.item.json;\n\nif (data.status === 'completed' && data.result) {\n  return {\n    json: {\n      success: true,\n      task_id: data.task_id,\n      type: data.original_request.command,\n      prompt: data.original_request.prompt,\n      result_url: data.result[0] || data.result,\n      created_at: data.created_at,\n      completed_at: new Date().toISOString(),\n      attempts: data.attempt,\n      metadata: {\n        model: data.original_request.model,\n        ...data.original_request\n      }\n    }\n  };\n} else {\n  return {\n    json: {\n      success: false,\n      task_id: data.task_id,\n      type: data.original_request.command,\n      status: data.status,\n      error: data.error || 'Task did not complete successfully',\n      attempts: data.attempt,\n      metadata: data.original_request\n    }\n  };\n}"
+      },
+      "id": "format-result",
+      "name": "Format Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1570, 480]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "IF Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF Music",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Image": {
+      "main": [
+        [
+          {
+            "node": "Create Image Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Music": {
+      "main": [
+        [
+          {
+            "node": "Create Music Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Video": {
+      "main": [
+        [
+          {
+            "node": "Create Video Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Image Task": {
+      "main": [
+        [
+          {
+            "node": "Prepare Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Music Task": {
+      "main": [
+        [
+          {
+            "node": "Prepare Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video Task": {
+      "main": [
+        [
+          {
+            "node": "Prepare Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Polling": {
+      "main": [
+        [
+          {
+            "node": "Polling Controller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling Controller": {
+      "main": [
+        [
+          {
+            "node": "IF Continue Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Continue Polling": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Poll",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Poll": {
+      "main": [
+        [
+          {
+            "node": "Check Task Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Task Status": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Polling Controller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "id": "",
+  "tags": []
+}

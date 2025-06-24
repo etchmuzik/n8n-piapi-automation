@@ -7,8 +7,11 @@ MCP-powered n8n workflow automation for PiAPI integration with image, music, and
 # Setup everything
 cd scripts && ./setup.sh
 
-# Test workflows
+# Test basic workflows
 ./test-workflows.sh
+
+# Test advanced features
+./test-advanced-workflows.sh
 
 # Create backup
 ./backup.sh
@@ -33,6 +36,9 @@ cd scripts && ./setup.sh
 ## Features
 
 ✅ **Working PiAPI Integration** - Image, music, and video generation  
+✅ **Advanced Polling System** - Automatic status checking until completion  
+✅ **Multi-Model Support** - Flux Pro/Dev, Midjourney, Kling, LLM  
+✅ **Content Download & Storage** - Automatic file organization  
 ✅ **MCP-Powered Automation** - CLI-based workflow management  
 ✅ **GitHub Integration** - Version control and CI/CD  
 ✅ **Automated Testing** - Webhook endpoint validation  

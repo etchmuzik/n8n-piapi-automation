@@ -1,0 +1,319 @@
+{
+  "meta": {
+    "instanceId": "2b4ab318d4f8eba10155f5eb0f51c5f5d883c3a9b9a506cad7c0e0c2f2c8874e"
+  },
+  "name": "PiAPI Advanced Models",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "piapi-advanced",
+        "responseMode": "lastNode"
+      },
+      "id": "webhook-advanced",
+      "name": "Webhook Advanced",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 600],
+      "webhookId": "piapi-advanced-webhook"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.model_type }}",
+        "rules": {
+          "rules": [
+            {
+              "value1": "={{ $json.model_type }}",
+              "operation": "equal",
+              "value2": "flux-pro"
+            },
+            {
+              "value1": "={{ $json.model_type }}",
+              "operation": "equal",
+              "value2": "flux-dev"
+            },
+            {
+              "value1": "={{ $json.model_type }}",
+              "operation": "equal",
+              "value2": "midjourney"
+            },
+            {
+              "value1": "={{ $json.model_type }}",
+              "operation": "equal",
+              "value2": "kling"
+            },
+            {
+              "value1": "={{ $json.model_type }}",
+              "operation": "equal",
+              "value2": "llm"
+            }
+          ]
+        }
+      },
+      "id": "switch-models",
+      "name": "Switch Models",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [470, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"Qubico/flux1-pro\", \"task_type\": \"txt2img\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"width\": {{ $json.width || 1024 }}, \"height\": {{ $json.height || 1024 }}, \"guidance_scale\": {{ $json.guidance_scale || 7.5 }}, \"steps\": {{ $json.steps || 50 }}}}"
+      },
+      "id": "flux-pro",
+      "name": "Flux Pro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"Qubico/flux1-dev\", \"task_type\": \"txt2img\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"width\": {{ $json.width || 1024 }}, \"height\": {{ $json.height || 1024 }}, \"guidance_scale\": {{ $json.guidance_scale || 5.0 }}, \"steps\": {{ $json.steps || 20 }}}}"
+      },
+      "id": "flux-dev",
+      "name": "Flux Dev",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"midjourney\", \"task_type\": \"imagine\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"aspect_ratio\": \"{{ $json.aspect_ratio || '1:1' }}\", \"stylize\": {{ $json.stylize || 100 }}, \"quality\": {{ $json.quality || 1 }}}}"
+      },
+      "id": "midjourney",
+      "name": "Midjourney",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"Kling/v1\", \"task_type\": \"txt2video\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"duration\": {{ $json.duration || 5 }}, \"aspect_ratio\": \"{{ $json.aspect_ratio || '16:9' }}\"}}"
+      },
+      "id": "kling-video",
+      "name": "Kling Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "d3a513bec58ea7c7e60eebf377fbbfb806f2304f12e1ef208cd701139658c088"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"{{ $json.llm_model || 'gpt-4' }}\", \"task_type\": \"text_generation\", \"input\": {\"prompt\": \"{{ $json.prompt }}\", \"max_tokens\": {{ $json.max_tokens || 1000 }}, \"temperature\": {{ $json.temperature || 0.7 }}}}"
+      },
+      "id": "llm-task",
+      "name": "LLM Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 800]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "task_id",
+              "value": "={{ $json.data.task_id }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $json.data.status }}"
+            },
+            {
+              "name": "model_type",
+              "value": "={{ $('Webhook Advanced').item.json.model_type }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [910, 600]
+    }
+  ],
+  "connections": {
+    "Webhook Advanced": {
+      "main": [
+        [
+          {
+            "node": "Switch Models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Models": {
+      "main": [
+        [
+          {
+            "node": "Flux Pro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Flux Dev",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Midjourney",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Kling Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LLM Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flux Pro": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flux Dev": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Midjourney": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kling Video": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Task": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "id": "",
+  "tags": []
+}

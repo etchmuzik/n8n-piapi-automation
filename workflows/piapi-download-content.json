@@ -1,0 +1,191 @@
+{
+  "meta": {
+    "instanceId": "2b4ab318d4f8eba10155f5eb0f51c5f5d883c3a9b9a506cad7c0e0c2f2c8874e"
+  },
+  "name": "PiAPI Download Content",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "piapi-download",
+        "responseMode": "lastNode"
+      },
+      "id": "webhook-download",
+      "name": "Webhook Download",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 400],
+      "webhookId": "piapi-download-webhook"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Prepare download data\nconst input = $input.item.json;\n\n// Determine file extension based on type\nlet fileExtension = 'bin';\nlet mimeType = 'application/octet-stream';\n\nswitch(input.type) {\n  case 'image':\n    fileExtension = 'png';\n    mimeType = 'image/png';\n    break;\n  case 'music':\n    fileExtension = 'mp3';\n    mimeType = 'audio/mpeg';\n    break;\n  case 'video':\n    fileExtension = 'mp4';\n    mimeType = 'video/mp4';\n    break;\n}\n\n// Generate filename with timestamp\nconst timestamp = new Date().toISOString().replace(/[:.]/g, '-');\nconst filename = `${input.type}_${input.task_id}_${timestamp}.${fileExtension}`;\n\nreturn {\n  json: {\n    ...input,\n    download_url: input.result_url,\n    filename: filename,\n    file_extension: fileExtension,\n    mime_type: mimeType,\n    storage_path: `/piapi-content/${input.type}/${new Date().toISOString().split('T')[0]}/${filename}`\n  }\n};"
+      },
+      "id": "prepare-download",
+      "name": "Prepare Download",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [470, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.download_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "download-file",
+      "name": "Download File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 400]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.storage_path }}",
+        "options": {}
+      },
+      "id": "save-to-disk",
+      "name": "Save to Disk",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [910, 400]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "message",
+              "value": "Content downloaded successfully"
+            },
+            {
+              "name": "task_id",
+              "value": "={{ $('Prepare Download').item.json.task_id }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $('Prepare Download').item.json.type }}"
+            },
+            {
+              "name": "filename",
+              "value": "={{ $('Prepare Download').item.json.filename }}"
+            },
+            {
+              "name": "storage_path",
+              "value": "={{ $('Prepare Download').item.json.storage_path }}"
+            },
+            {
+              "name": "download_timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [1130, 400]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "error"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.error.message || 'Download failed' }}"
+            },
+            {
+              "name": "task_id",
+              "value": "={{ $('Prepare Download').item.json.task_id }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $('Prepare Download').item.json.type }}"
+            },
+            {
+              "name": "error_timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [910, 520]
+    }
+  ],
+  "connections": {
+    "Webhook Download": {
+      "main": [
+        [
+          {
+            "node": "Prepare Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Download": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Save to Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Disk": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "versionId": "",
+  "id": "",
+  "tags": []
+}
